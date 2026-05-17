@@ -1,8 +1,8 @@
 import os
 import asyncio
 import aiohttp
-from pyrogram import Client, filters, idle
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from hydrogram import Client, filters, idle
+from hydrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from flask import Flask
 from threading import Thread
 
@@ -11,11 +11,10 @@ web_app = Flask(__name__)
 
 @web_app.route('/')
 def home():
-    return "Bot is running 24/7 safely without loops error!"
+    return "Bot is running 24/7 safely on Hydrogram!"
 
 def run_web():
     port = int(os.environ.get("PORT", 8080))
-    # use_reloader=False और threaded=False करने से लूप क्लैश नहीं होता
     web_app.run(host='0.0.0.0', port=port, use_reloader=False, threaded=False)
 
 # ⚙️ Configuration Setup
@@ -41,7 +40,7 @@ HELP_TEXT = (
     "📖 **ʜᴇʟᴘ & ɢᴜɪᴅᴇ ᴍᴇɴᴜ**\n\n"
     "• **ʜᴏᴡ ᴛᴏ ᴜsᴇ:** sᴇɴᴅ ᴏɴᴇ ᴏʀ ᴍᴜʟᴛɪᴘʟᴇ ᴘʜᴏᴛᴏs/ᴠɪᴅᴇᴏs ᴛᴏ ᴛʜɪs ᴄʜᴀᴛ.\n"
     "• **ᴘʀᴏᴄᴇssɪɴɢ:** ᴄʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ᴀғᴛᴇʀ sᴇɴᴅɪɴɢ ᴀʟʟ ғɪʟᴇs.\n"
-    "• **<b>ᴄᴀɴᴄᴇʟ:</b>** ᴜsᴇ /cancel ᴛᴏ ᴄʟᴇᴀʀ ʏᴏᴜʀ sᴇɴᴛ sᴛᴏʀᴀɢᴇ.\n"
+    "• **ᴄᴀɴᴄᴇʟ:** ᴜsᴇ /cancel ᴛᴏ ᴄʟᴇᴀʀ ʏᴏᴜʀ sᴇɴᴛ sᴛᴏʀᴀɢᴇ.\n"
     "• **ʟɪᴍɪᴛs:** sᴜᴘᴘᴏʀᴛs ғɪʟᴇs ᴜᴘ ᴛᴏ **𝟻ᴍʙ** ᴘᴇʀ ғɪʟᴇ."
 )
 
@@ -50,7 +49,7 @@ ABOUT_TEXT = (
     "• **ɴᴀᴍᴇ:** ᴛᴇʟᴇɢʀᴀᴘʜ ᴜᴘʟᴏᴀᴅᴇʀ\n"
     "• **ᴜsᴇʀɴᴀᴍᴇ:** @Tele_Conve_link_bot\n"
     "• **ʟᴀɴɢᴜᴀɢᴇ:** ᴘʏᴛʜᴏɴ 𝟹\n"
-    "• **ʟɪʙʀᴀʀʏ:** ᴘʏʀᴏɢʀᴀᴍ\n\n"
+    "• **ʟɪʙʀᴀʀʏ:** ʜʏᴅʀᴏɢʀᴀᴍ\n\n"
     "⚡ _ᴘᴏᴡᴇʀᴇᴅ ʙʏ @MoviesHub_Verse_"
 )
 
@@ -119,7 +118,7 @@ async def callback_handler(client, query):
         if links:
             final_text = "📊 **ᴍᴇᴅɪᴀ ᴜᴘʟᴏᴀᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ!**\n\n"
             for i, link in enumerate(links, 1):
-                final_text += f"🔗 **ʟɪɴᴋ {i}:** `{link}`\n"
+                final_text += f"🔗 **ʟɪнк {i}:** `{link}`\n"
             final_text += "\n🌿 _ᴊᴏɪɴ @MoviesHub_Verse_ ғᴏʀ ᴍᴏʀᴇ ᴜᴘᴅᴀᴛᴇs!_"
             
             result_buttons = InlineKeyboardMarkup([
@@ -128,7 +127,7 @@ async def callback_handler(client, query):
             ])
             await query.message.edit_text(text=final_text, reply_markup=result_buttons, disable_web_page_preview=True)
         else:
-            await query.message.edit_text("❌ `ғᴀɪʟᴇᴅ ᴛᴏ ᴜᴘʟᴏᴀᴅ ᴍᴇᴅɪᴀ.`")
+            await query.message.edit_text("❌ `Templates failed to upload.`")
 
 @app.on_message((filters.photo | filters.video | filters.animation) & filters.private)
 async def handle_incoming_media(client, message: Message):
@@ -152,24 +151,16 @@ async def handle_incoming_media(client, message: Message):
     
     await message.reply_text(text=caption_text, reply_markup=process_buttons, quote=True)
 
-# 🚀 Python 3.14+ के लिए एकदम सेफ और परफेक्ट कस्टम लूप स्टार्टर
-if __name__ == "__main__":
+# 🚀 Safe starter execution using Hydrogram asynchronous engine
+async def main():
     print("--- ⚡ Starting Web Server Thread ⚡ ---")
     Thread(target=run_web, daemon=True).start()
     
-    print("--- 🤖 Initializing Async Event Loop 🤖 ---")
-    # खुद का नया इवेंट लूप सेट करना ताकि Pyrogram का पुराना लूप क्लैश न हो
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    
-    # बोट को एसिंक तरीके से स्टार्ट करना
-    loop.run_until_complete(app.start())
-    print("--- ✨ Bot is Live and Running smoothly! ✨ ---")
-    
-    try:
-        # लूप को हमेशा के लिए चालू रखना और idle() को संभालना
-        loop.create_task(idle())
-        loop.run_forever()
-    except (KeyboardInterrupt, SystemExit):
-        print("--- 🛑 Stopping Bot Safely 🛑 ---")
-        loop.run_until_complete(app.stop())
+    print("--- 🤖 Starting Hydrogram Client 🤖 ---")
+    await app.start()
+    print("--- ✨ Bot is Live and Running smoothly without any sync errors! ✨ ---")
+    await idle()
+    await app.stop()
+
+if __name__ == "__main__":
+    asyncio.run(main())

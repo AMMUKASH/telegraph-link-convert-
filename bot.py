@@ -1,97 +1,121 @@
 import os
 import asyncio
+import aiohttp
+from pyrogram import Client, filters
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from threading import Thread
-from pyrogram import Client, filters, enums
 from flask import Flask
-from pymongo import MongoClient
 
-# -------- CONFIG (Use Environment Variables for Safety) ---------
-API_ID = int(os.environ.get("API_ID", 34135757))
-API_HASH = os.environ.get("API_HASH", "d3d5548fe0d98eb1fb793c2c37c9e5c8")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8752567586:AAG04Z6vLXVLXZZkQAy_ra7w6Z8suLmD3a8")
-MONGO_URL = os.environ.get("MONGO_URL", "mongodb+srv://misssqn:VICTOR01@cluster0.3otqmso.mongodb.net/?appName=Cluster0")
+# ----- FLASK WEB SERVER FOR RENDER -----
+web_app = Flask(__name__)
 
-# -------- DATABASE ---------
-try:
-    mongo = MongoClient(MONGO_URL)
-    db = mongo.MentionBot
-    users_db = db.users
-except Exception as e:
-    print(f"DB Error: {e}")
-
-# -------- BOT CLIENT ---------
-app = Client(
-    "MentionTagBot",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN
-)
-
-# -------- WEB SERVER ---------
-web = Flask(__name__)
-
-@web.route('/')
+@web_app.route('/')
 def home():
-    return "Bot is running alive!"
+    return "Bot is running 24/7!"
 
 def run_web():
+    # Render ऑटोमैटिकली PORT एनवायरनमेंट वेरिएबल देता है
     port = int(os.environ.get("PORT", 8080))
-    web.run(host="0.0.0.0", port=port)
+    web_app.run(host='0.0.0.0', port=port)
 
-# -------- HELPERS ---------
-TAGGING_CHATS = [] # To keep track of active tagging
+# वेब सर्वर को बैकग्राउंड थ्रेड में चलाना
+Thread(target=run_web, daemon=True).start()
+# ----------------------------------------
 
-# -------- BOT COMMANDS ---------
-@app.on_message(filters.command("start"))
-async def start(client, message):
-    await message.reply_text("👋 Hello! I am a Mention All Bot.\n\nUse /all [text] to tag everyone.")
+# ⚙️ Configuration Setup
+API_ID = 38138069
+API_HASH = "2ed313ebcc45cbcf65d1fc736ec71681"
+BOT_TOKEN = "8639893765:AAEeK8NgH3KUMpzW07HMmnlD8OZRa8HSAZw"
+START_IMG = "https://graph.org/file/b7099af5c11783109ea46-2585863078106bcf2c.jpg"
 
-@app.on_message(filters.command(["all", "tagall"]) & filters.group)
-async def tag_all(client, message):
-    # Admin Check
-    user = await client.get_chat_member(message.chat.id, message.from_user.id)
-    if not (user.status == enums.ChatMemberStatus.ADMINISTRATOR or user.status == enums.ChatMemberStatus.OWNER):
-        return await message.reply_text("❌ Sirf Admins hi ye command use kar sakte hain!")
+app = Client("TelegraphBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-    if message.chat.id in TAGGING_CHATS:
-        return await message.reply_text("⚠️ Pehle se ek tagging process chal rahi hai. /stop use karein.")
+# 🎭 Stylish Text Elements
+START_TEXT = (
+    "✨ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛᴇʟᴇɢʀᴀᴘʜ ᴜᴘʟᴏᴀᴅᴇʀ ʙᴏᴛ ✨\n\n"
+    "I ᴄᴀɴ ᴄᴏɴᴠᴇʀᴛ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ғɪʟᴇs (ᴘʜᴏᴛᴏs, ᴠɪᴅᴇᴏs, ᴀɴɪᴍᴀᴛɪᴏɴs) "
+    "ɪɴᴛᴏ ᴀ sᴛ stylɪsʜ ᴀɴᴅ sʜᴀʀᴇᴀʙʟᴇ **ɢʀᴀᴘʜ.ᴏʀɢ** ʟɪɴᴋ ɪɴ sᴇᴄᴏɴᴅs!\n\n"
+    "» ᴊᴜsᴛ sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇᴅɪᴀ ᴛᴏ ɢᴇᴛ sᴛᴀʀᴛᴇᴅ."
+)
 
-    TAGGING_CHATS.append(message.chat.id)
-    text = message.text.split(None, 1)[1] if len(message.command) > 1 else "Ghabrana nahi hai, sabko bula lo!"
-    
-    mentions = []
-    async for member in client.get_chat_members(message.chat.id):
-        if message.chat.id not in TAGGING_CHATS:
-            break
-        if not member.user.is_bot:
-            mentions.append(member.user.mention)
-    
-    # Send in batches of 5 to avoid spam filters
-    for i in range(0, len(mentions), 5):
-        if message.chat.id not in TAGGING_CHATS:
-            break
+HELP_TEXT = (
+    "📖 **ʜᴇʟᴘ & ɢᴜɪᴅᴇ ᴍᴇɴᴜ**\n\n"
+    "• **ʜᴏᴡ ᴛᴏ ᴜsᴇ:** ᴊᴜsᴛ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀɴʏ ᴘʜᴏᴛᴏ, ᴠɪᴅᴇᴏ, ᴏʀ ɢɪғ ᴛᴏ ᴛʜɪs ᴄʜᴀᴛ.\n"
+    "• **ᴘʀᴏᴄᴇssɪɴɢ:** ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴀɴᴅ ɪɴsᴛᴀɴᴛʟʏ ᴜᴘʟᴏᴀᴅ ɪᴛ ᴛᴏ ᴛʜᴇ ᴄʟᴏᴜᴅ.\n"
+    "• **ʟɪᴍɪᴛs:** sᴜᴘᴘᴏʀᴛs ғɪʟᴇs ᴜᴘ ᴛᴏ **𝟻ᴍʙ** (ᴀs ᴘᴇʀ ɢʀᴀᴘʜ.ᴏʀɢ ʟɪᴍɪᴛᴀᴛɪᴏɴs)."
+)
+
+ABOUT_TEXT = (
+    "🤖 **ᴀʙᴏᴜᴛ ᴛʜɪs ʙᴏᴛ**\n\n"
+    "• **ɴᴀᴍᴇ:** ᴛᴇʟᴇɢʀᴀᴘʜ ᴜᴘʟᴏᴀᴅᴇʀ\n"
+    "• **ᴜsᴇʀɴᴀᴍᴇ:** @Tele_Conve_link_bot\n"
+    "• **ʟᴀɴɢᴜᴀɢᴇ:** ᴘʏᴛʜᴏɴ 𝟹\n"
+    "• **ʟɪʙʀᴀʀʏ:** ᴘʏʀᴏɢʀᴀᴍ\n\n"
+    "⚡ _ᴘᴏᴡᴇʀᴇᴅ ʙʏ @MoviesHub_Verse_"
+)
+
+START_BUTTONS = InlineKeyboardMarkup([
+    [
+        InlineKeyboardButton("⚙️ ʜᴇʟᴘ & ɢᴜɪᴅᴇ", callback_data="help_menu"),
+        InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ ʙᴏᴛ", callback_data="about_menu")
+    ],
+    [InlineKeyboardButton("📢 ᴏғғɪᴄɪᴀʟ ᴄʜᴀɴɴᴇʟ", url="https://t.me/MoviesHub_Verse")]
+])
+
+BACK_BUTTON = InlineKeyboardMarkup([
+    [InlineKeyboardButton("🔙 ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ", callback_data="back_home")]
+])
+
+@app.on_message(filters.command("start") & filters.private)
+async def start(client, message: Message):
+    await message.reply_photo(photo=START_IMG, caption=START_TEXT, reply_markup=START_BUTTONS)
+
+@app.on_callback_query()
+async def callback_handler(client, query):
+    if query.data == "help_menu":
+        await query.message.edit_caption(caption=HELP_TEXT, reply_markup=BACK_BUTTON)
+    elif query.data == "about_menu":
+        await query.message.edit_caption(caption=ABOUT_TEXT, reply_markup=BACK_BUTTON)
+    elif query.data == "back_home":
+        await query.message.edit_caption(caption=START_TEXT, reply_markup=START_BUTTONS)
+
+@app.on_message((filters.photo | filters.video | filters.animation) & filters.private)
+async def telegraph_uploader(client, message: Message):
+    status_msg = await message.reply_text("⚡ `ᴘʀᴏᴄᴇssɪɴɢ ʏᴏᴜʀ ᴍᴇᴅɪᴀ...`", quote=True)
+    try:
+        await status_msg.edit_text("📥 `ᴅᴏᴡɴʟᴏᴀᴅɪɴɢ ғɪʟᴇ...`")
+        local_path = await message.download()
+        await status_msg.edit_text("🚀 `ᴜᴘʟᴏᴀᴅɪɴɢ ᴛᴏ ɢʀᴀᴘʜ.ᴏʀɢ...`")
         
-        batch = " ".join(mentions[i:i+5])
-        await client.send_message(message.chat.id, f"{text}\n\n{batch}")
-        await asyncio.sleep(2) # Flood wait protection
+        upload_url = "https://graph.org/upload"
+        with open(local_path, "rb") as file:
+            form_data = aiohttp.FormData()
+            form_data.add_field("file", file, filename=os.path.basename(local_path))
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(upload_url, data=form_data) as response:
+                    if response.status == 200:
+                        res_json = await response.json()
+                        file_link = f"https://graph.org{res_json[0]['src']}"
+                        
+                        final_caption = (
+                            "📊 **ᴍᴇᴅɪᴀ ᴜᴘʟᴏᴀᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ!**\n\n"
+                            f"🔗 **ʟɪɴᴋ:** `{file_link}`\n\n"
+                            "🌿 _ᴊᴏɪɴ @MoviesHub_Verse_ ᴍᴏʀᴇ ᴜᴘᴅᴀᴛᴇs!_"
+                        )
+                        result_buttons = InlineKeyboardMarkup([
+                            [InlineKeyboardButton("🌐 ᴏᴘᴇɴ ʟɪɴᴋ", url=file_link)],
+                            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/MoviesHub_Verse")]
+                        ])
+                        await status_msg.delete()
+                        await message.reply_text(text=final_caption, reply_markup=result_buttons, quote=True)
+                    else:
+                        await status_msg.edit_text("❌ ``ᴛᴏ ᴜᴘʟᴏᴀᴅ ᴛᴏ sᴇʀᴠᴇʀ.`")
+                        
+        if os.path.exists(local_path):
+            os.remove(local_path)
+    except Exception as e:
+        await status_msg.edit_text(f"❌ **ᴇʀʀᴏʀ:** `{str(e)}`")
 
-    if message.chat.id in TAGGING_CHATS:
-        TAGGING_CHATS.remove(message.chat.id)
-    await message.reply_text("✅ Tagging complete!")
-
-@app.on_message(filters.command("stop") & filters.group)
-async def stop_tagging(client, message):
-    if message.chat.id in TAGGING_CHATS:
-        TAGGING_CHATS.remove(message.chat.id)
-        await message.reply_text("🛑 Tagging rok di gayi hai.")
-    else:
-        await message.reply_text("Koi tagging process nahi chal rahi.")
-
-# -------- MAIN RUNNER ---------
-if __name__ == "__main__":
-    # Start Flask in background
-    Thread(target=run_web, daemon=True).start()
-    
-    # Run Pyrogram
-    print("Bot Starting...")
-    app.run()
+print("Bot Status: Active...")
+app.run()

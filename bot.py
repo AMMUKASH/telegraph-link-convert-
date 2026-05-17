@@ -14,7 +14,6 @@ def home():
     return "Bot is running 24/7!"
 
 def run_web():
-    # Render ऑटोमैटिकली PORT एनवायरनमेंट वेरिएबल देता है
     port = int(os.environ.get("PORT", 8080))
     web_app.run(host='0.0.0.0', port=port)
 
@@ -110,12 +109,22 @@ async def telegraph_uploader(client, message: Message):
                         await status_msg.delete()
                         await message.reply_text(text=final_caption, reply_markup=result_buttons, quote=True)
                     else:
-                        await status_msg.edit_text("❌ ``ᴛᴏ ᴜᴘʟᴏᴀᴅ ᴛᴏ sᴇʀᴠᴇʀ.`")
+                        await status_msg.edit_text("❌ `ғᴀɪʟᴇᴅ ᴛᴏ ᴜᴘʟᴏᴀᴅ ᴛᴏ sᴇʀᴠᴇʀ.`")
                         
         if os.path.exists(local_path):
             os.remove(local_path)
     except Exception as e:
         await status_msg.edit_text(f"❌ **ᴇʀʀᴏʀ:** `{str(e)}`")
 
-print("Bot Status: Active...")
-app.run()
+# Python 3.14+ के लिए नया एसिंक स्टार्टर मेथड
+async def main():
+    print("Starting Pyrogram Client...")
+    await app.start()
+    print("Bot Status: Active and Running smoothly... ✨")
+    # बोट को चालू रखने के लिए एक इनफिनिट लूप जब तक बोट मैन्युअली स्टॉप न हो
+    while True:
+        await asyncio.sleep(3600)
+
+if __name__ == "__main__":
+    # मुख्य थ्रेड में इवेंट लूप बनाकर रन करना
+    asyncio.run(main())

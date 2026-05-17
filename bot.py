@@ -1,26 +1,21 @@
 import os
 import asyncio
 import aiohttp
-from pyrogram import Client, filters, idle
+from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from flask import Flask
+from threading import Thread
 
-# ----- FLASK WEB SERVER CONFIGURATION -----
+# ----- FLASK WEB SERVER FOR RENDER -----
 web_app = Flask(__name__)
 
 @web_app.route('/')
 def home():
     return "Bot is running 24/7 safely!"
 
-async def run_flask():
-    # Flask को एसिंक तरीके से बैकग्राउंड में संभालने के लिए एरर-फ्री मेथड
+def run_web():
     port = int(os.environ.get("PORT", 8080))
-    loop = asyncio.get_event_loop()
-    # Flask को बिना थ्रेड के एसिंक लूप के अंदर चलाना
-    await loop.run_in_executor(
-        None, 
-        lambda: web_app.run(host='0.0.0.0', port=port, use_reloader=False, threaded=True)
-    )
+    web_app.run(host='0.0.0.0', port=port, use_reloader=False, threaded=True)
 
 # ⚙️ Configuration Setup
 API_ID = 38138069
@@ -29,6 +24,10 @@ BOT_TOKEN = "8639893765:AAEeK8NgH3KUMpzW07HMmnlD8OZRa8HSAZw"
 START_IMG = "https://graph.org/file/b7099af5c11783109ea46-2585863078106bcf2c.jpg"
 
 app = Client("TelegraphBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+
+# 🔄 Temporary User Cache for Batch Uploads
+# यह डिक्शनरी यूजर की भेजी गई फाइल्स को स्टोर करेगी (जैसा आपके स्क्रीनशॉट में है)
+USER_DATA = {}
 
 # 🎭 Stylish Text Elements
 START_TEXT = (
@@ -40,9 +39,10 @@ START_TEXT = (
 
 HELP_TEXT = (
     "📖 **ʜᴇʟᴘ & ɢᴜɪᴅᴇ ᴍᴇɴᴜ**\n\n"
-    "• **ʜᴏᴡ ᴛᴏ ᴜsᴇ:** ᴊᴜsᴛ sᴇɴᴅ ᴏʀ ғᴏʀᴡᴀʀᴅ ᴀɴʏ ᴘʜᴏᴛᴏ, ᴠɪᴅᴇᴏ, ᴏʀ ɢɪғ ᴛᴏ ᴛʜɪs ᴄʜᴀᴛ.\n"
-    "• **ᴘʀᴏᴄᴇssɪɴɢ:** ᴛʜᴇ ʙᴏᴛ ᴡɪʟʟ ᴅᴏᴡɴʟᴏᴀᴅ ᴀɴᴅ ɪɴsᴛᴀɴᴛʟʏ ᴜᴘʟᴏᴀᴅ ɪᴛ ᴛᴏ ᴛʜᴇ ᴄʟᴏᴜᴅ.\n"
-    "• **ʟɪᴍɪᴛs:** sᴜᴘᴘᴏʀᴛs ғɪʟᴇs ᴜᴘ ᴛᴏ **𝟻ᴍʙ** (ᴀs ᴘᴇʀ ɢʀᴀᴘʜ.ᴏʀɢ ʟɪᴍɪᴛᴀᴛɪᴏɴs)."
+    "• **ʜᴏᴡ ᴛᴏ ᴜsᴇ:** sᴇɴᴅ ᴏɴᴇ ᴏʀ ᴍᴜʟᴛɪᴘʟᴇ ᴘʜᴏᴛᴏs/ᴠɪᴅᴇᴏs ᴛᴏ ᴛʜɪs ᴄʜᴀᴛ.\n"
+    "• **ᴘʀᴏᴄᴇssɪɴɢ:** ᴄʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ᴀғᴛᴇʀ sᴇɴᴅɪɴɢ ᴀʟʟ ғɪʟᴇs.\n"
+    "• **ᴄᴀɴᴄᴇʟ:** ᴜsᴇ /cancel ᴛᴏ ᴄʟᴇᴀʀ ʏᴏᴜʀ sᴇɴᴛ sᴛᴏʀᴀɢᴇ.\n"
+    "• **ʟɪᴍɪᴛs:** sᴜᴘᴘᴏʀᴛs ғɪʟᴇs ᴜᴘ ᴛᴏ **𝟻ᴍʙ** ᴘᴇʀ ғɪʟᴇ."
 )
 
 ABOUT_TEXT = (
@@ -70,67 +70,96 @@ BACK_BUTTON = InlineKeyboardMarkup([
 async def start(client, message: Message):
     await message.reply_photo(photo=START_IMG, caption=START_TEXT, reply_markup=START_BUTTONS)
 
+@app.on_message(filters.command("cancel") & filters.private)
+async def cancel_action(client, message: Message):
+    user_id = message.from_user.id
+    if user_id in USER_DATA:
+        USER_DATA[user_id].clear()
+    await message.reply_text("🧹 `Your temporary file cache has been cleared!`")
+
 @app.on_callback_query()
 async def callback_handler(client, query):
+    user_id = query.from_user.id
+    
     if query.data == "help_menu":
         await query.message.edit_caption(caption=HELP_TEXT, reply_markup=BACK_BUTTON)
     elif query.data == "about_menu":
         await query.message.edit_caption(caption=ABOUT_TEXT, reply_markup=BACK_BUTTON)
     elif query.data == "back_home":
         await query.message.edit_caption(caption=START_TEXT, reply_markup=START_BUTTONS)
+        
+    # जब यूजर सभी फाइलें भेजने के बाद बटन दबाता है
+    elif query.data == "generate_links":
+        if user_id not in USER_DATA or not USER_DATA[user_id]:
+            await query.answer("❌ No files found to process!", show_alert=True)
+            return
+            
+        await query.message.edit_text("🚀 `ᴜᴘʟᴏᴀᴅɪɴɢ ᴀʟʟ ғɪʟᴇs ᴛᴏ ɢʀᴀᴘʜ.ᴏʀɢ...`")
+        
+        links = []
+        # सभी सेव की गई फाइलों को एक-एक करके प्रोसेस करना
+        for msg in USER_DATA[user_id]:
+            try:
+                local_path = await msg.download()
+                upload_url = "https://graph.org/upload"
+                with open(local_path, "rb") as file:
+                    form_data = aiohttp.FormData()
+                    form_data.add_field("file", file, filename=os.path.basename(local_path))
+                    async with aiohttp.ClientSession() as session:
+                        async with session.post(upload_url, data=form_data) as response:
+                            if response.status == 200:
+                                res_json = await response.json()
+                                file_link = f"https://graph.org{res_json[0]['src']}"
+                                links.append(file_link)
+                if os.path.exists(local_path):
+                    os.remove(local_path)
+            except Exception:
+                pass
+                
+        # डेटा क्लियर करना
+        USER_DATA[user_id].clear()
+        
+        if links:
+            final_text = "📊 **ᴍᴇᴅɪᴀ ᴜᴘʟᴏᴀᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ!**\n\n"
+            for i, link in enumerate(links, 1):
+                final_text += f"🔗 **ʟɪɴᴋ {i}:** `{link}`\n"
+            final_text += "\n🌿 _ᴊᴏɪɴ @MoviesHub_Verse_ ғᴏʀ ᴍᴏʀᴇ ᴜᴘᴅᴀᴛᴇs!_"
+            
+            result_buttons = InlineKeyboardMarkup([
+                [InlineKeyboardButton("🌐 ᴏᴘᴇɴ ʟɪɴᴋ 𝟷", url=links[0])],
+                [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/MoviesHub_Verse")]
+            ])
+            await query.message.edit_text(text=final_text, reply_markup=result_buttons, disable_web_page_preview=True)
+        else:
+            await query.message.edit_text("❌ `ғᴀɪʟᴇᴅ ᴛᴏ ᴜᴘʟᴏᴀᴅ ᴍᴇᴅɪᴀ.`")
 
 @app.on_message((filters.photo | filters.video | filters.animation) & filters.private)
-async def telegraph_uploader(client, message: Message):
-    status_msg = await message.reply_text("⚡ `ᴘʀᴏᴄᴇssɪɴɢ ʏᴏᴜʀ ᴍᴇᴅɪᴀ...`", quote=True)
-    try:
-        await status_msg.edit_text("📥 `ᴅᴏᴡɴʟᴏᴀᴅɪɴɢ ғɪʟᴇ...`")
-        local_path = await message.download()
-        await status_msg.edit_text("🚀 `ᴜᴘʟᴏᴀᴅɪɴɢ ᴛᴏ ɢʀᴀᴘʜ.ᴏʀɢ...`")
+async def handle_incoming_media(client, message: Message):
+    user_id = message.from_user.id
+    
+    if user_id not in USER_DATA:
+        USER_DATA[user_id] = []
         
-        upload_url = "https://graph.org/upload"
-        with open(local_path, "rb") as file:
-            form_data = aiohttp.FormData()
-            form_data.add_field("file", file, filename=os.path.basename(local_path))
-            
-            async with aiohttp.ClientSession() as session:
-                async with session.post(upload_url, data=form_data) as response:
-                    if response.status == 200:
-                        res_json = await response.json()
-                        file_link = f"https://graph.org{res_json[0]['src']}"
-                        
-                        final_caption = (
-                            "📊 **ᴍᴇᴅɪᴀ ᴜᴘʟᴏᴀᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ!**\n\n"
-                            f"🔗 **ʟɪɴᴋ:** `{file_link}`\n\n"
-                            "🌿 _ᴊᴏɪɴ @MoviesHub_Verse_ ᴍᴏʀᴇ ᴜᴘᴅᴀᴛᴇs!_"
-                        )
-                        result_buttons = InlineKeyboardMarkup([
-                            [InlineKeyboardButton("🌐 ᴏᴘᴇɴ ʟɪɴᴋ", url=file_link)],
-                            [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/MoviesHub_Verse")]
-                        ])
-                        await status_msg.delete()
-                        await message.reply_text(text=final_caption, reply_markup=result_buttons, quote=True)
-                    else:
-                        await status_msg.edit_text("❌ `ғᴀɪʟᴇᴅ ᴛᴏ ᴜᴘʟᴏᴀᴅ ᴛᴏ sᴇʀᴠᴇʀ.`")
-                        
-        if os.path.exists(local_path):
-            os.remove(local_path)
-    except Exception as e:
-        await status_msg.edit_text(f"❌ **ᴇʀʀᴏʀ:** `{str(e)}`")
-
-# 📥 Python 3.14+ के लिए एकदम सुरक्षित एसिंक मेन फंक्शन
-async def main():
-    print("--- ⚡ Starting Web Server ⚡ ---")
-    asyncio.create_task(run_flask())  # वेब सर्वर को बैकग्राउंड एसिंक टास्क में डालना
+    USER_DATA[user_id].append(message)
+    file_count = len(USER_DATA[user_id])
     
-    print("--- 🤖 Starting Pyrogram Bot 🤖 ---")
-    await app.start()
+    # स्क्रीनशॉट जैसा डिट्टो स्टाइलिश प्रॉम्प्ट और बटन लेआउट
+    caption_text = (
+        "please click on button after sending all files\n\n"
+        f"**Received {file_count} Files.**\n\n"
+        "Use /cancel to clear the sent message cache"
+    )
     
-    print("--- ✨ Bot & Web Server are Live! ✨ ---")
-    await idle()  # बोट को तब तक चालू रखना जब तक कोई रोके नहीं
+    process_buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("➕ Add Text / Media / Caption", callback_data="generate_links")]
+    ])
     
-    print("--- 🛑 Stopping Bot 🛑 ---")
-    await app.stop()
+    await message.reply_text(text=caption_text, reply_markup=process_buttons, quote=True)
 
 if __name__ == "__main__":
-    # सीधे एसिंक रन का उपयोग बिना किसी थ्रेड टकराव के
-    asyncio.run(main())
+    print("--- ⚡ Starting Web Server Thread ⚡ ---")
+    Thread(target=run_web, daemon=True).start()
+    
+    print("--- 🤖 Starting Pyrogram Bot Safely 🤖 ---")
+    # यह इन-बिल्ट रनर Python 3.14+ के मेन थ्रेड asyncio इवेंट लूप एरर को ऑटोमैटिक फिक्स करता है
+    app.run()

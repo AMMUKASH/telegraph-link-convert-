@@ -38,7 +38,7 @@ HELP_TEXT = (
     "📖 **ʜᴇʟᴘ & ɢᴜɪᴅᴇ ᴍᴇɴᴜ**\n\n"
     "• **ʜᴏᴡ ᴛᴏ ᴜsᴇ:** sᴇɴᴅ ᴏɴᴇ ᴏʀ ᴍᴜʟᴛɪᴘʟᴇ ᴘʜᴏᴛᴏs/ᴠɪᴅᴇᴏs ᴛᴏ ᴛʜɪs ᴄʜᴀᴛ.\n"
     "• **ᴘʀᴏᴄᴇssɪɴɢ:** ᴄʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ᴀғᴛᴇʀ sᴇɴᴅɪɴɢ ᴀʟʟ ғɪʟᴇs.\n"
-    "• **<b>ᴄᴀɴᴄᴇʟ:</b>** ᴜsᴇ /cancel ᴛᴏ ᴄʟᴇᴀʀ ʏᴏᴜʀ sᴇɴᴛ sᴛᴏʀᴀɢᴇ.\n"
+    "• **ᴄᴀɴᴄᴇʟ:** ᴜsᴇ /cancel ᴛᴏ ᴄʟᴇᴀʀ ʏᴏᴜʀ sᴇɴᴛ sᴛᴏʀᴀɢᴇ.\n"
     "• **ʟɪᴍɪᴛs:** sᴜᴘᴘᴏʀᴛs ғɪʟᴇs ᴜᴘ ᴛᴏ **𝟻ᴍʙ** ᴘᴇʀ ғɪʟᴇ."
 )
 
@@ -63,7 +63,6 @@ BACK_BUTTON = InlineKeyboardMarkup([
     [InlineKeyboardButton("🔙 ʙᴀᴄᴋ ᴛᴏ ʜᴏᴍᴇ", callback_data="back_home")]
 ])
 
-# यहाँ हम हैंडलर्स को सीधे रजिस्टर करने के लिए एक फंक्शन का उपयोग करेंगे
 def register_handlers(app: Client):
     
     @app.on_message(filters.command("start") & filters.private)
@@ -93,42 +92,52 @@ def register_handlers(app: Client):
                 await query.answer("❌ No files found to process!", show_alert=True)
                 return
                 
-            await query.message.edit_text("🚀 `ᴜᴘʟᴏᴀᴅɪɴɢ ᴀʟʟ ғɪʟᴇs ᴛᴏ ɢʀᴀᴘʜ.ᴏʀɢ...`")
+            # प्रोग्रेस स्टेटस मैसेज दिखाना
+            status_msg = await query.message.reply_text("🚀 `ᴜᴘʟᴏᴀᴅɪɴɢ ᴀʟʟ ғɪʟᴇs ᴛᴏ ɢʀᴀᴘʜ.ᴏʀɢ...`", quote=True)
             
             links = []
             for msg in USER_DATA[user_id]:
                 try:
                     local_path = await msg.download()
                     upload_url = "https://graph.org/upload"
+                    
                     with open(local_path, "rb") as file:
                         form_data = aiohttp.FormData()
                         form_data.add_field("file", file, filename=os.path.basename(local_path))
+                        
                         async with aiohttp.ClientSession() as session:
                             async with session.post(upload_url, data=form_data) as response:
                                 if response.status == 200:
                                     res_json = await response.json()
-                                    file_link = f"https://graph.org{res_json[0]['src']}"
-                                    links.append(file_link)
+                                    # Graph.org का रिस्पांस एरे या डिक्शनरी दोनों को सही से संभालने के लिए चेकिंग
+                                    if isinstance(res_json, list) and len(res_json) > 0:
+                                        file_link = f"https://graph.org{res_json[0]['src']}"
+                                        links.append(file_link)
+                                    elif isinstance(res_json, dict) and 'src' in res_json:
+                                        file_link = f"https://graph.org{res_json['src']}"
+                                        links.append(file_link)
+                                        
                     if os.path.exists(local_path):
                         os.remove(local_path)
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"Upload Exception: {str(e)}")
                     
+            # प्रोसेस पूरा होने के बाद डेटा डिलीट करना
             USER_DATA[user_id].clear()
             
             if links:
                 final_text = "📊 **ᴍᴇᴅɪᴀ ᴜᴘʟᴏᴀᴅᴇᴅ sᴜᴄᴄᴇssғᴜʟʟʏ!**\n\n"
                 for i, link in enumerate(links, 1):
-                    final_text += f"🔗 **ʟɪɴᴋ {i}:** `{link}`\n"
+                    final_text += f"🔗 **link {i}:** `{link}`\n"
                 final_text += "\n🌿 _ᴊᴏɪɴ @MoviesHub_Verse_ ғᴏʀ ᴍᴏʀᴇ ᴜᴘᴅᴀᴛᴇs!_"
                 
                 result_buttons = InlineKeyboardMarkup([
                     [InlineKeyboardButton("🌐 ᴏᴘᴇɴ ʟɪɴᴋ 𝟷", url=links[0])],
                     [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/MoviesHub_Verse")]
                 ])
-                await query.message.edit_text(text=final_text, reply_markup=result_buttons, disable_web_page_preview=True)
+                await status_msg.edit_text(text=final_text, reply_markup=result_buttons, disable_web_page_preview=True)
             else:
-                await query.message.edit_text("❌ `Templates failed to upload.`")
+                await status_msg.edit_text("❌ `Failed to upload files. Make sure they are under 5MB.`")
 
     @app.on_message((filters.photo | filters.video | filters.animation) & filters.private)
     async def handle_incoming_media(client, message: Message):
@@ -158,10 +167,8 @@ async def main():
     Thread(target=run_web, daemon=True).start()
     
     print("--- 🤖 Initializing Hydrogram Client Inside Loop 🤖 ---")
-    # Client को यहाँ फंक्शन के अंदर बनाने से इसे पहले से एक्टिव इवेंट लूप मिल जाता है
     app = Client("TelegraphBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
     
-    # हैंडलर्स रजिस्टर करना
     register_handlers(app)
     
     await app.start()

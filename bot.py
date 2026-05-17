@@ -1,25 +1,26 @@
 import os
 import asyncio
 import aiohttp
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from threading import Thread
 from flask import Flask
 
-# ----- FLASK WEB SERVER FOR RENDER -----
+# ----- FLASK WEB SERVER CONFIGURATION -----
 web_app = Flask(__name__)
 
 @web_app.route('/')
 def home():
-    return "Bot is running 24/7!"
+    return "Bot is running 24/7 safely!"
 
-def run_web():
+async def run_flask():
+    # Flask को एसिंक तरीके से बैकग्राउंड में संभालने के लिए एरर-फ्री मेथड
     port = int(os.environ.get("PORT", 8080))
-    web_app.run(host='0.0.0.0', port=port)
-
-# वेब सर्वर को बैकग्राउंड थ्रेड में चलाना
-Thread(target=run_web, daemon=True).start()
-# ----------------------------------------
+    loop = asyncio.get_event_loop()
+    # Flask को बिना थ्रेड के एसिंक लूप के अंदर चलाना
+    await loop.run_in_executor(
+        None, 
+        lambda: web_app.run(host='0.0.0.0', port=port, use_reloader=False, threaded=True)
+    )
 
 # ⚙️ Configuration Setup
 API_ID = 38138069
@@ -116,15 +117,20 @@ async def telegraph_uploader(client, message: Message):
     except Exception as e:
         await status_msg.edit_text(f"❌ **ᴇʀʀᴏʀ:** `{str(e)}`")
 
-# Python 3.14+ के लिए नया एसिंक स्टार्टर मेथड
+# 📥 Python 3.14+ के लिए एकदम सुरक्षित एसिंक मेन फंक्शन
 async def main():
-    print("Starting Pyrogram Client...")
+    print("--- ⚡ Starting Web Server ⚡ ---")
+    asyncio.create_task(run_flask())  # वेब सर्वर को बैकग्राउंड एसिंक टास्क में डालना
+    
+    print("--- 🤖 Starting Pyrogram Bot 🤖 ---")
     await app.start()
-    print("Bot Status: Active and Running smoothly... ✨")
-    # बोट को चालू रखने के लिए एक इनफिनिट लूप जब तक बोट मैन्युअली स्टॉप न हो
-    while True:
-        await asyncio.sleep(3600)
+    
+    print("--- ✨ Bot & Web Server are Live! ✨ ---")
+    await idle()  # बोट को तब तक चालू रखना जब तक कोई रोके नहीं
+    
+    print("--- 🛑 Stopping Bot 🛑 ---")
+    await app.stop()
 
 if __name__ == "__main__":
-    # मुख्य थ्रेड में इवेंट लूप बनाकर रन करना
+    # सीधे एसिंक रन का उपयोग बिना किसी थ्रेड टकराव के
     asyncio.run(main())

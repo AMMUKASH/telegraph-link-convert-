@@ -1,63 +1,58 @@
-# ⚡ 𝐌𝝴𝝶𝛕𝝸𝞂𝝶 𝐓𝝰𝐠 𝐀ʟʟ 𝐁𝞂𝛕 ⚡
-
 <p align="center">
-  <img src="https://graph.org/file/25cec9c36c9d5997985c8-5208bbc342ec7eac96.jpg" alt="Bot Logo" width="400">
+  <img src="https://graph.org/file/b7099af5c11783109ea46-2585863078106bcf2c.jpg" alt="Telegraph Uploader Banner" width="100%" style="border-radius: 15px;">
 </p>
 
+<h1 align="center">✨ ᴛᴇʟᴇɢʀᴀᴘʜ ᴜᴘʟᴏᴀᴅᴇʀ ʙᴏᴛ ✨</h1>
+
 <p align="center">
-<img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python" alt="Python Version">
-<img src="https://img.shields.io/badge/Library-Pyrogram-orange?style=for-the-badge&logo=telegram" alt="Library">
-<img src="https://img.shields.io/badge/Deploy-Render-brightgreen?style=for-the-badge&logo=render" alt="Deploy">
+  <a href="https://t.me/Tele_Conve_link_bot">
+    <img src="https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram" alt="Telegram Bot">
+  </a>
+  <a href="https://t.me/MoviesHub_Verse">
+    <img src="https://img.shields.io/badge/Join-Channel-red?style=for-the-badge&logo=telegram" alt="Updates Channel">
+  </a>
+  <img src="https://img.shields.io/badge/Language-Python%203-brightgreen?style=for-the-badge&logo=python" alt="Python">
 </p>
 
 ---
 
-## ✨ 𝐅𝝴𝝰𝐭𝞄𝐫𝝴𝐬
-* 🚀 **Tag All Members:** Group ke sabhi members ko ek baar mein tag karein.
-* 💬 **Stylish Quotes:** Saare mentions `"quotes"` ke andar aayenge.
-* 🛡️ **Admin Only:** Sirf group admins hi tag command use kar sakte hain.
-* ⏹️ **Cancel Command:** Tagging process ko beech mein hi rokne ki suvidha.
-* 📊 **MongoDB:** Users data secure rakhne ke liye database support.
-* 🌐 **24/7 Online:** Render aur Cron-jobs ke saath hamesha active.
+### 🌟 ꜰᴇᴀᴛᴜʀᴇꜱ
+* **ɪɴꜱᴛᴀɴᴛ ᴜᴘʟᴏᴀᴅ:** Converts your photos, videos, and GIFs into a `graph.org` link within seconds.
+* **ᴘʀᴇᴍɪᴜᴍ ᴜɪ:** Designed with elegant Small Caps fonts and clean inline button menus.
+* **𝟸𝟺/𝟽 ᴏɴʟɪɴᴇ:** Integrated with a Flask web server, perfectly optimized to run non-stop on Render using Cron-jobs.
+* **ᴀᴜᴛᴏ-ᴄʟᴇᴀɴᴜᴘ:** Automatically deletes downloaded files from the local server after uploading to save space.
 
 ---
 
-## 🛠 𝐂𝞂𝐦𝐦𝝰𝝶ᴅ𝐬
-| Command | Description |
+### 🛠️ ᴅᴇᴘʟᴏʏᴍᴇɴᴛ ɢᴜɪᴅᴇ (ʀᴇɴᴅᴇʀ)
+
+1. **Fork this Repository** to your GitHub profile.
+2. Go to **[Render.com](https://render.com/)** and create a new **Web Service**.
+3. Connect your forked repository.
+4. Use the following configuration settings:
+
+| Setting | Value |
 | :--- | :--- |
-| `/start` | Bot ko start karne aur menu dekhne ke liye. |
-| `/all` | Group ke saare members ko tag karne ke liye. |
-| `/tagall` | `/all` ka alternative command. |
-| `/cancel` | Chalti hui tagging ko rokne ke liye. |
+| **Runtime** | `Python` |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `python bot.py` |
+| **Instance Type** | `Free` |
+
+5. Click **Deploy Web Service** 🚀
+
+> ⚠️ **IMPORTANT:** To keep the bot alive 24/7 on the Free Tier, copy your Render URL and add it to **[cron-job.org](https://cron-job.org/)** to ping every 5 or 10 minutes!
 
 ---
 
-## 🚀 𝐃𝝴𝞀ʟ𝞂𝐲𝐦𝝴𝝶𝐭 𝐆𝞄𝝸ᴅ𝝴
+### ⚙️ ᴄᴏɴꜰɪɢᴜʀᴀᴛɪᴏɴ ᴠᴀʀɪᴀʙʟᴇꜱ
 
-### 1. Variables Setup
-Aapko ye variables `bot.py` mein ya Render ke Environment Variables mein set karne honge:
-- `API_ID`: [my.telegram.org](https://my.telegram.org) se lein.
-- `API_HASH`: [my.telegram.org](https://my.telegram.org) se lein.
-- `BOT_TOKEN`: [@BotFather](https://t.me/BotFather) se lein.
-- `MONGO_URL`: MongoDB Atlas se lein.
-
-### 2. Deploy on Render
-1. GitHub par ye files upload karein: `bot.py`, `requirements.txt`, `README.md`.
-2. Render.com par "New Web Service" banayein.
-3. **Build Command:** `pip install -r requirements.txt`
-4. **Start Command:** `python bot.py`
+Inside your `bot.py`, make sure to configure these settings:
+* `API_ID` — Your Telegram API ID from my.telegram.org
+* `API_HASH` — Your Telegram API Hash from my.telegram.org
+* `BOT_TOKEN` — Your Bot Token from @BotFather
 
 ---
 
-## 👨‍💻 𝐎𝐰𝐧𝐞𝐫 & 𝐒𝐮𝐩𝐩𝐨𝐫𝐭
-<p align="left">
-<a href="https://t.me/p3ter_x"><img src="https://img.shields.io/badge/Owner-PETER-blue?style=plastic&logo=telegram"></a>
-<a href="https://t.me/radhesupport"><img src="https://img.shields.io/badge/Channel-Update-red?style=plastic&logo=telegram"></a>
-<a href="https://t.me/+OGbh7_kV7SAyYTEx"><img src="https://img.shields.io/badge/Group-Support-yellow?style=plastic&logo=telegram"></a>
-</p>
-
----
 <p align="center">
-Built with ❤️ by <b>PETER</b>
+  <b>ᴘᴏᴡᴇʀᴇᴅ ʙʏ <a href="https://t.me/MoviesHub_Verse">ᴍᴏᴠɪᴇꜱʜᴜʙ ᴠᴇʀꜱᴇ</a> 🌿</b>
 </p>
-

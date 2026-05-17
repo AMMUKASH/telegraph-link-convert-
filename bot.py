@@ -1,7 +1,7 @@
 import os
 import asyncio
 import aiohttp
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from flask import Flask
 from threading import Thread
@@ -11,11 +11,12 @@ web_app = Flask(__name__)
 
 @web_app.route('/')
 def home():
-    return "Bot is running 24/7 safely!"
+    return "Bot is running 24/7 safely without loops error!"
 
 def run_web():
     port = int(os.environ.get("PORT", 8080))
-    web_app.run(host='0.0.0.0', port=port, use_reloader=False, threaded=True)
+    # use_reloader=False और threaded=False करने से लूप क्लैश नहीं होता
+    web_app.run(host='0.0.0.0', port=port, use_reloader=False, threaded=False)
 
 # ⚙️ Configuration Setup
 API_ID = 38138069
@@ -26,7 +27,6 @@ START_IMG = "https://graph.org/file/b7099af5c11783109ea46-2585863078106bcf2c.jpg
 app = Client("TelegraphBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 # 🔄 Temporary User Cache for Batch Uploads
-# यह डिक्शनरी यूजर की भेजी गई फाइल्स को स्टोर करेगी (जैसा आपके स्क्रीनशॉट में है)
 USER_DATA = {}
 
 # 🎭 Stylish Text Elements
@@ -41,7 +41,7 @@ HELP_TEXT = (
     "📖 **ʜᴇʟᴘ & ɢᴜɪᴅᴇ ᴍᴇɴᴜ**\n\n"
     "• **ʜᴏᴡ ᴛᴏ ᴜsᴇ:** sᴇɴᴅ ᴏɴᴇ ᴏʀ ᴍᴜʟᴛɪᴘʟᴇ ᴘʜᴏᴛᴏs/ᴠɪᴅᴇᴏs ᴛᴏ ᴛʜɪs ᴄʜᴀᴛ.\n"
     "• **ᴘʀᴏᴄᴇssɪɴɢ:** ᴄʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ᴀғᴛᴇʀ sᴇɴᴅɪɴɢ ᴀʟʟ ғɪʟᴇs.\n"
-    "• **ᴄᴀɴᴄᴇʟ:** ᴜsᴇ /cancel ᴛᴏ ᴄʟᴇᴀʀ ʏᴏᴜʀ sᴇɴᴛ sᴛᴏʀᴀɢᴇ.\n"
+    "• **<b>ᴄᴀɴᴄᴇʟ:</b>** ᴜsᴇ /cancel ᴛᴏ ᴄʟᴇᴀʀ ʏᴏᴜʀ sᴇɴᴛ sᴛᴏʀᴀɢᴇ.\n"
     "• **ʟɪᴍɪᴛs:** sᴜᴘᴘᴏʀᴛs ғɪʟᴇs ᴜᴘ ᴛᴏ **𝟻ᴍʙ** ᴘᴇʀ ғɪʟᴇ."
 )
 
@@ -88,7 +88,6 @@ async def callback_handler(client, query):
     elif query.data == "back_home":
         await query.message.edit_caption(caption=START_TEXT, reply_markup=START_BUTTONS)
         
-    # जब यूजर सभी फाइलें भेजने के बाद बटन दबाता है
     elif query.data == "generate_links":
         if user_id not in USER_DATA or not USER_DATA[user_id]:
             await query.answer("❌ No files found to process!", show_alert=True)
@@ -97,7 +96,6 @@ async def callback_handler(client, query):
         await query.message.edit_text("🚀 `ᴜᴘʟᴏᴀᴅɪɴɢ ᴀʟʟ ғɪʟᴇs ᴛᴏ ɢʀᴀᴘʜ.ᴏʀɢ...`")
         
         links = []
-        # सभी सेव की गई फाइलों को एक-एक करके प्रोसेस करना
         for msg in USER_DATA[user_id]:
             try:
                 local_path = await msg.download()
@@ -116,7 +114,6 @@ async def callback_handler(client, query):
             except Exception:
                 pass
                 
-        # डेटा क्लियर करना
         USER_DATA[user_id].clear()
         
         if links:
@@ -143,7 +140,6 @@ async def handle_incoming_media(client, message: Message):
     USER_DATA[user_id].append(message)
     file_count = len(USER_DATA[user_id])
     
-    # स्क्रीनशॉट जैसा डिट्टो स्टाइलिश प्रॉम्प्ट और बटन लेआउट
     caption_text = (
         "please click on button after sending all files\n\n"
         f"**Received {file_count} Files.**\n\n"
@@ -156,10 +152,24 @@ async def handle_incoming_media(client, message: Message):
     
     await message.reply_text(text=caption_text, reply_markup=process_buttons, quote=True)
 
+# 🚀 Python 3.14+ के लिए एकदम सेफ और परफेक्ट कस्टम लूप स्टार्टर
 if __name__ == "__main__":
     print("--- ⚡ Starting Web Server Thread ⚡ ---")
     Thread(target=run_web, daemon=True).start()
     
-    print("--- 🤖 Starting Pyrogram Bot Safely 🤖 ---")
-    # यह इन-बिल्ट रनर Python 3.14+ के मेन थ्रेड asyncio इवेंट लूप एरर को ऑटोमैटिक फिक्स करता है
-    app.run()
+    print("--- 🤖 Initializing Async Event Loop 🤖 ---")
+    # खुद का नया इवेंट लूप सेट करना ताकि Pyrogram का पुराना लूप क्लैश न हो
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    # बोट को एसिंक तरीके से स्टार्ट करना
+    loop.run_until_complete(app.start())
+    print("--- ✨ Bot is Live and Running smoothly! ✨ ---")
+    
+    try:
+        # लूप को हमेशा के लिए चालू रखना और idle() को संभालना
+        loop.create_task(idle())
+        loop.run_forever()
+    except (KeyboardInterrupt, SystemExit):
+        print("--- 🛑 Stopping Bot Safely 🛑 ---")
+        loop.run_until_complete(app.stop())
